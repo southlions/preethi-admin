@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preethi Premium Admin</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 
     <style>
         :root {
@@ -31,7 +32,76 @@
             color: var(--text);
             display: flex;
             min-height: 100vh;
+            overflow-x: hidden;
         }
+
+        /* --- LOGIN SCREEN (New) --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #fdfbfd 0%, #e8dff5 100%);
+            z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        #login-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 50px 40px;
+            width: 400px;
+            max-width: 90%;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(106, 0, 75, 0.15);
+            border: 1px solid rgba(255,255,255,0.8);
+            text-align: center;
+            transform: translateY(0);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .login-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px; color: var(--primary);
+            margin-bottom: 5px;
+        }
+        .login-sub { font-size: 12px; color: #888; letter-spacing: 2px; margin-bottom: 40px; text-transform: uppercase; }
+        
+        .login-input-group { text-align: left; margin-bottom: 20px; position: relative; }
+        .login-input-group i {
+            position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+            color: var(--accent); opacity: 0.5; font-size: 14px; transition: 0.3s;
+        }
+        .login-input {
+            width: 100%; padding: 16px 16px 16px 45px;
+            border: 1px solid #eee; background: white; border-radius: 14px;
+            font-family: 'Poppins'; font-size: 14px; outline: none; transition: 0.3s;
+            color: var(--text);
+        }
+        .login-input:focus {
+            border-color: var(--primary); box-shadow: 0 5px 20px rgba(106, 0, 75, 0.1);
+        }
+        .login-input:focus + i { opacity: 1; color: var(--primary); }
+
+        .btn-login {
+            background: linear-gradient(135deg, var(--primary) 0%, #8e44ad 100%);
+            color: white; border: none; padding: 16px; border-radius: 14px;
+            font-weight: 600; cursor: pointer; width: 100%; margin-top: 15px;
+            transition: 0.3s; font-size: 15px; box-shadow: 0 10px 20px rgba(142, 68, 173, 0.2);
+            position: relative; overflow: hidden;
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(142, 68, 173, 0.3); }
+        .btn-login:active { transform: scale(0.98); }
+        
+        .login-error {
+            color: var(--danger); font-size: 12px; margin-top: 15px; min-height: 18px;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            opacity: 0; transition: 0.3s;
+        }
+        .login-error.show { opacity: 1; }
+
+        /* Hide main app initially */
+        #app-container { display: none; width: 100%; }
+        #app-container.visible { display: flex; }
+
 
         /* --- SIDEBAR --- */
         .sidebar {
@@ -49,7 +119,6 @@
             box-shadow: 5px 0 25px rgba(0,0,0,0.03);
         }
 
-        /* Updated Link Styling for Header */
         .sidebar-link { text-decoration: none; display: block; margin-bottom: 40px; }
         .sidebar h1 {
             font-family: 'Playfair Display', serif;
@@ -80,6 +149,15 @@
             box-shadow: 0 10px 20px rgba(106, 0, 75, 0.25); transform: translateX(5px);
         }
         .nav-item.active i { color: white; }
+
+        .btn-logout {
+            margin-top: auto; /* Push to bottom */
+            background: #fff5f5; color: var(--danger);
+            border: 1px solid #ffecec; justify-content: center;
+        }
+        .btn-logout:hover { background: var(--danger); color: white; }
+        .btn-logout i { color: var(--danger); }
+        .btn-logout:hover i { color: white; }
 
         /* --- MAIN CONTENT --- */
         .main-container {
@@ -116,7 +194,7 @@
         .mini-section { display: none; }
         .mini-section.active-mini { display: block; animation: fadeIn 0.3s ease; }
 
-        /* --- DASHBOARD STATS & DRAG DROP --- */
+        /* --- DASHBOARD STATS --- */
         .dashboard-grid {
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
@@ -169,7 +247,6 @@
             box-shadow: 0 0 10px rgba(255,255,255,0.5);
         }
         .goal-text { font-size: 10px; margin-top: 8px; opacity: 0.9; display: flex; justify-content: space-between; }
-
         .pulse-dot {
             height: 8px; width: 8px; background-color: var(--warning);
             border-radius: 50%; display: inline-block; margin-left: 8px;
@@ -177,19 +254,31 @@
         }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(253, 203, 110, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(253, 203, 110, 0); } 100% { box-shadow: 0 0 0 0 rgba(253, 203, 110, 0); } }
 
-        /* --- FORMS --- */
+        /* --- FORMS & CLOUDINARY --- */
         .glass-card {
             background: var(--glass); backdrop-filter: blur(12px); border-radius: 24px;
             border: 1px solid white; padding: 40px; box-shadow: var(--shadow);
+            position: relative;
         }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
         .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--accent); margin-bottom: 8px; letter-spacing: 0.8px; text-transform: uppercase; }
+        
+        /* New Input Group Style for Upload Button */
+        .input-wrapper { display: flex; gap: 10px; }
         input {
             width: 100%; padding: 14px 18px; border-radius: 12px;
             border: 1px solid #eee; background: white; outline: none;
             transition: 0.3s; font-family: inherit; font-size: 14px;
         }
         input:focus { border-color: var(--primary); box-shadow: 0 5px 20px rgba(106, 0, 75, 0.08); }
+        
+        .btn-upload {
+            background: white; border: 1px solid #eee; color: var(--accent);
+            width: 50px; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; font-size: 16px;
+        }
+        .btn-upload:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
         .btn-publish {
             background: linear-gradient(135deg, var(--primary) 0%, #8e44ad 100%);
             color: white; border: none; padding: 16px; border-radius: 14px;
@@ -197,6 +286,18 @@
             transition: 0.3s; font-size: 15px; box-shadow: 0 10px 25px rgba(142, 68, 173, 0.25);
         }
         .btn-publish:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(142, 68, 173, 0.35); }
+
+        .cloudinary-status {
+            background: #f0f3ff; padding: 15px 20px; border-radius: 16px; margin-bottom: 25px;
+            display: flex; justify-content: space-between; align-items: center; border: 1px dashed #aec4ff;
+        }
+        .c-info { font-size: 12px; color: #555; display: flex; align-items: center; gap: 10px; }
+        .btn-cloud-connect {
+            background: #4285F4; color: white; border: none; padding: 8px 16px; border-radius: 8px;
+            font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;
+        }
+        .btn-cloud-connect:hover { background: #3367d6; }
+        .connected-badge { color: var(--success); font-weight: 700; font-size: 12px; display: none; align-items: center; gap: 5px; }
 
         /* --- INVENTORY --- */
         .inventory-list { display: flex; flex-direction: column; gap: 15px; }
@@ -307,6 +408,8 @@
             .nav-item { margin: 0; padding: 10px; flex-direction: column; font-size: 10px; gap: 5px; background: transparent !important; color: #888 !important; box-shadow: none !important; }
             .nav-item.active { color: var(--primary) !important; transform: none; }
             .nav-item.active i { color: var(--primary); }
+            .btn-logout span { display: none; }
+            .btn-logout { margin-top: 0; border: none; padding: 10px; background: transparent; }
             .main-container { padding: 25px 15px 90px 15px; height: auto; overflow: visible; }
             .dashboard-grid { grid-template-columns: 1fr; gap: 15px; }
             .orders-grid { grid-template-columns: 1fr; }
@@ -315,211 +418,301 @@
 </head>
 <body>
 
-    <div class="modal-overlay" id="customModal">
-        <div class="modal-box">
-            <div class="modal-icon" id="mIcon"><i class="fas fa-exclamation"></i></div>
-            <div class="modal-title" id="mTitle">Alert</div>
-            <div class="modal-desc" id="mDesc">Are you sure?</div>
+    <div id="login-screen">
+        <div class="login-card">
+            <div class="login-logo">Preethi</div>
+            <div class="login-sub">Premium Admin Portal</div>
             
-            <div class="modal-actions" id="mActions"></div>
-            
-            <div id="mInputContainer" style="display:none; margin-bottom:20px;">
-                <input type="number" id="mInput" placeholder="Enter Amount..." style="text-align:center; font-size:18px;">
-            </div>
-            <div class="modal-actions" id="mInputActions" style="display:none;">
-                <button class="btn-modal btn-secondary" onclick="closeModal()">Cancel</button>
-                <button class="btn-modal btn-primary" onclick="confirmInput()">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="sidebar">
-        <a href="https://preethiproducts.github.io/CRAFT/" class="sidebar-link">
-            <h1>PREETHI</h1>
-        </a>
-        <div class="nav-item active" onclick="showSection('dashboard-section', this)">
-            <i class="fas fa-chart-pie"></i> Dashboard
-        </div>
-        <div class="nav-item" onclick="showSection('products-section', this)">
-            <i class="fas fa-box-open"></i> Products
-        </div>
-        <div class="nav-item" onclick="showSection('orders-section', this)">
-            <i class="fas fa-receipt"></i> Orders <span class="pulse-dot" id="menu-pulse" style="display:none"></span>
-        </div>
-        <div class="nav-item" onclick="showSection('chat-section', this)">
-            <i class="fas fa-comments"></i> Chat
-        </div>
-    </div>
-
-    <div class="main-container">
-        
-        <section id="dashboard-section" class="content-section active-section">
-            <h2><i class="fas fa-chart-line"></i> Analytics Dashboard</h2>
-            <div class="dashboard-grid" id="dashGrid">
+            <form onsubmit="handleLogin(event)">
+                <div class="login-input-group">
+                    <input type="email" id="loginEmail" class="login-input" placeholder="Email Address" required>
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="login-input-group">
+                    <input type="password" id="loginPass" class="login-input" placeholder="Password" required>
+                    <i class="fas fa-lock"></i>
+                </div>
                 
-                <div class="stat-card card-revenue" id="card-revenue" draggable="true" onclick="tryReset('revenue', 'Total Revenue')">
-                    <i class="fas fa-coins stat-icon-bg"></i>
-                    <div class="stat-label">Total Revenue</div>
-                    <div class="stat-value" id="dash-revenue">Rs. 0</div>
-                    <div class="stat-hint"><i class="fas fa-mouse"></i> Double click to Reset</div>
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Access Dashboard
+                </button>
+                
+                <div class="login-error" id="loginError">
+                    <i class="fas fa-exclamation-circle"></i> <span>Invalid Credentials</span>
                 </div>
+            </form>
+        </div>
+    </div>
 
-                <div class="stat-card goal-card" id="card-goal" draggable="true" onclick="editGoal()">
-                    <i class="fas fa-trophy stat-icon-bg" style="color:white; opacity:0.1;"></i>
-                    <div class="stat-label">Monthly Goal</div>
-                    <div class="stat-value" id="goal-text">0%</div>
-                    <div class="progress-container">
-                        <div class="progress-bar" id="goal-bar"></div>
-                    </div>
-                    <div class="goal-text">
-                        <span id="goal-target-display">Target: Rs. 100k</span>
-                        <span id="goal-remain">Rs. 100k left</span>
-                    </div>
-                    <div class="stat-hint" style="color:rgba(255,255,255,0.6); margin-top:5px;"><i class="fas fa-pen"></i> Double click to Edit</div>
-                </div>
-
-                <div class="stat-card card-success" id="card-completed" draggable="true" onclick="tryReset('completed', 'Completed Orders')">
-                    <i class="fas fa-check-circle stat-icon-bg" style="color:var(--success)"></i>
-                    <div class="stat-label">Completed Orders</div>
-                    <div class="stat-value" id="dash-completed">0</div>
-                    <div class="stat-hint"><i class="fas fa-mouse"></i> Reset</div>
-                </div>
-
-                <div class="stat-card card-cancel" id="card-canceled" draggable="true" onclick="tryReset('canceled', 'Canceled Orders')">
-                    <i class="fas fa-times-circle stat-icon-bg" style="color:var(--danger)"></i>
-                    <div class="stat-label">Canceled Orders</div>
-                    <div class="stat-value" id="dash-canceled">0</div>
-                    <div class="stat-hint"><i class="fas fa-mouse"></i> Reset</div>
-                </div>
-
-                <div class="stat-card card-info" id="card-inv" draggable="true">
-                    <i class="fas fa-tags stat-icon-bg" style="color:var(--info)"></i>
-                    <div class="stat-label">Inventory Value</div>
-                    <div class="stat-value" id="dash-inv-value">Rs. 0</div>
-                    <div class="stat-hint">Active Products Sum</div>
-                </div>
-
-                <div class="stat-card card-accent" id="card-cust" draggable="true">
-                    <i class="fas fa-users stat-icon-bg" style="color:var(--accent)"></i>
-                    <div class="stat-label">Customers</div>
-                    <div class="stat-value" id="dash-customers">0</div>
-                    <div class="stat-hint">Unique Buyers</div>
-                </div>
-
-                <div class="stat-card" id="card-aov" draggable="true">
-                    <i class="fas fa-chart-pie stat-icon-bg"></i>
-                    <div class="stat-label">Avg. Order Value</div>
-                    <div class="stat-value" id="dash-aov">Rs. 0</div>
-                    <div class="stat-hint">Rev / Completed</div>
-                </div>
-
-                <div class="stat-card" id="card-rate" draggable="true">
-                    <i class="fas fa-percent stat-icon-bg"></i>
-                    <div class="stat-label">Success Rate</div>
-                    <div class="stat-value" id="dash-rate">0%</div>
-                    <div class="stat-hint">Order Completion %</div>
-                </div>
-
-                <div class="stat-card" id="card-pending" draggable="true" style="border: 2px solid var(--warning);">
-                    <i class="fas fa-bell stat-icon-bg" style="color:var(--warning)"></i>
-                    <div class="stat-label">Pending Orders <span class="pulse-dot" id="pending-pulse" style="display:none"></span></div>
-                    <div class="stat-value" id="dash-pending" style="color:#e67e22">0</div>
-                    <div class="stat-hint">Action Required</div>
-                </div>
-
-            </div>
-        </section>
-
-        <section id="products-section" class="content-section">
-            <h2><i class="fas fa-box-open"></i> Product Management</h2>
-            
-            <div class="sub-nav">
-                <div class="sub-tab active" onclick="showMiniSection('add-item-mini', this)">Add New Item</div>
-                <div class="sub-tab" onclick="showMiniSection('inventory-mini', this)">Live Inventory</div>
-            </div>
-
-            <div id="add-item-mini" class="mini-section active-mini">
-                <div class="glass-card">
-                    <h3 style="margin-bottom:20px; color:var(--primary);">Create Premium Listing</h3>
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label>Item Name</label>
-                            <input type="text" id="pName" placeholder="e.g. Lavender Dream Bouquet">
-                        </div>
-                        <div class="input-group">
-                            <label>Regular Price (Rs.)</label>
-                            <input type="number" id="pPrice" placeholder="1200">
-                        </div>
-                        <div class="input-group">
-                            <label>Discount Price (Rs.)</label>
-                            <input type="number" id="pDiscount" placeholder="Optional">
-                        </div>
-                        
-                        <div class="input-group" style="grid-column: span 1;">
-                            <label>Main Thumbnail URL</label>
-                            <input type="text" id="img1" placeholder="https://...">
-                        </div>
-                        <div class="input-group"><label>Gallery 1 URL</label><input type="text" id="img2" placeholder="https://..."></div>
-                        <div class="input-group"><label>Gallery 2 URL</label><input type="text" id="img3" placeholder="https://..."></div>
-                        <div class="input-group"><label>Gallery 3 URL</label><input type="text" id="img4" placeholder="https://..."></div>
-                    </div>
-                    <button class="btn-publish" onclick="publishItem()">
-                        <i class="fas fa-cloud-upload-alt"></i> Publish to Website
-                    </button>
-                </div>
-            </div>
-
-            <div id="inventory-mini" class="mini-section">
-                <div class="inventory-list" id="itemList"></div>
-            </div>
-        </section>
+    <div id="app-container">
         
-        <section id="orders-section" class="content-section">
-            <h2><i class="fas fa-clipboard-list"></i> Order Management</h2>
+        <div class="modal-overlay" id="cloudModal">
+            <div class="modal-box">
+                <div class="modal-icon"><i class="fas fa-cloud"></i></div>
+                <div class="modal-title">Cloudinary Setup</div>
+                <div class="modal-desc">
+                    Enter your Cloud Name and Unsigned Upload Preset to enable uploads.
+                    <br><small style="color:#999; display:block; margin-top:5px;">(Find these in your Cloudinary Dashboard)</small>
+                </div>
+                
+                <div style="margin-bottom:20px; text-align:left;">
+                    <label style="font-size:10px; font-weight:700; color:#888;">CLOUD NAME</label>
+                    <input type="text" id="cCloudName" placeholder="e.g. preethi-shop" style="margin-bottom:10px;">
+                    
+                    <label style="font-size:10px; font-weight:700; color:#888;">UPLOAD PRESET (Unsigned)</label>
+                    <input type="text" id="cPreset" placeholder="e.g. ml_default">
+                </div>
 
-            <div class="sub-nav">
-                <div class="sub-tab active" onclick="showMiniSection('active-orders-mini', this)">Active Orders</div>
-                <div class="sub-tab" onclick="showMiniSection('history-completed-mini', this)">History: Completed</div>
-                <div class="sub-tab" onclick="showMiniSection('history-canceled-mini', this)">History: Canceled</div>
-            </div>
-
-            <div id="active-orders-mini" class="mini-section active-mini">
-                <div id="messageList" class="orders-grid"></div>
-            </div>
-
-            <div id="history-completed-mini" class="mini-section">
-                <div id="completedList" class="orders-grid">
-                    <div style="text-align:center; padding:40px; color:#aaa; grid-column:1/-1;">
-                        <i class="fas fa-history" style="font-size:30px; margin-bottom:10px;"></i><br>
-                        Local History Viewer
-                    </div>
+                <div class="modal-actions">
+                    <button class="btn-modal btn-secondary" onclick="closeCloudModal()">Cancel</button>
+                    <button class="btn-modal btn-primary" onclick="saveCloudConfig()">Connect</button>
                 </div>
             </div>
+        </div>
 
-             <div id="history-canceled-mini" class="mini-section">
-                <div id="canceledList" class="orders-grid">
-                    <div style="text-align:center; padding:40px; color:#aaa; grid-column:1/-1;">
-                        <i class="fas fa-ban" style="font-size:30px; margin-bottom:10px;"></i><br>
-                        No recent cancellations.
-                    </div>
+        <div class="modal-overlay" id="customModal">
+            <div class="modal-box">
+                <div class="modal-icon" id="mIcon"><i class="fas fa-exclamation"></i></div>
+                <div class="modal-title" id="mTitle">Alert</div>
+                <div class="modal-desc" id="mDesc">Are you sure?</div>
+                
+                <div class="modal-actions" id="mActions"></div>
+                
+                <div id="mInputContainer" style="display:none; margin-bottom:20px;">
+                    <input type="number" id="mInput" placeholder="Enter Amount..." style="text-align:center; font-size:18px;">
+                </div>
+                <div class="modal-actions" id="mInputActions" style="display:none;">
+                    <button class="btn-modal btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button class="btn-modal btn-primary" onclick="confirmInput()">Save</button>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <section id="chat-section" class="content-section">
-            <h2><i class="fas fa-comments"></i> Client Chat</h2>
-            <div class="chat-placeholder">
-                <i class="fas fa-comment-dots chat-icon"></i>
-                <h3>Chat Feature Coming Soon</h3>
-                <p style="color:#888;">Direct messaging with customers will be available in the next update.</p>
+        <div class="sidebar">
+            <a href="https://preethiproducts.github.io/CRAFT/" class="sidebar-link">
+                <h1>PREETHI</h1>
+            </a>
+            <div class="nav-item active" onclick="showSection('dashboard-section', this)">
+                <i class="fas fa-chart-pie"></i> Dashboard
             </div>
-        </section>
+            <div class="nav-item" onclick="showSection('products-section', this)">
+                <i class="fas fa-box-open"></i> Products
+            </div>
+            <div class="nav-item" onclick="showSection('orders-section', this)">
+                <i class="fas fa-receipt"></i> Orders <span class="pulse-dot" id="menu-pulse" style="display:none"></span>
+            </div>
+            <div class="nav-item" onclick="showSection('chat-section', this)">
+                <i class="fas fa-comments"></i> Chat
+            </div>
+            
+            <div class="nav-item btn-logout" onclick="handleLogout()">
+                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+            </div>
+        </div>
 
+        <div class="main-container">
+            
+            <section id="dashboard-section" class="content-section active-section">
+                <h2><i class="fas fa-chart-line"></i> Analytics Dashboard</h2>
+                <div class="dashboard-grid" id="dashGrid">
+                    
+                    <div class="stat-card card-revenue" id="card-revenue" draggable="true" onclick="tryReset('revenue', 'Total Revenue')">
+                        <i class="fas fa-coins stat-icon-bg"></i>
+                        <div class="stat-label">Total Revenue</div>
+                        <div class="stat-value" id="dash-revenue">Rs. 0</div>
+                        <div class="stat-hint"><i class="fas fa-mouse"></i> Double click to Reset</div>
+                    </div>
+
+                    <div class="stat-card goal-card" id="card-goal" draggable="true" onclick="editGoal()">
+                        <i class="fas fa-trophy stat-icon-bg" style="color:white; opacity:0.1;"></i>
+                        <div class="stat-label">Monthly Goal</div>
+                        <div class="stat-value" id="goal-text">0%</div>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="goal-bar"></div>
+                        </div>
+                        <div class="goal-text">
+                            <span id="goal-target-display">Target: Rs. 100k</span>
+                            <span id="goal-remain">Rs. 100k left</span>
+                        </div>
+                        <div class="stat-hint" style="color:rgba(255,255,255,0.6); margin-top:5px;"><i class="fas fa-pen"></i> Double click to Edit</div>
+                    </div>
+
+                    <div class="stat-card card-success" id="card-completed" draggable="true" onclick="tryReset('completed', 'Completed Orders')">
+                        <i class="fas fa-check-circle stat-icon-bg" style="color:var(--success)"></i>
+                        <div class="stat-label">Completed Orders</div>
+                        <div class="stat-value" id="dash-completed">0</div>
+                        <div class="stat-hint"><i class="fas fa-mouse"></i> Reset</div>
+                    </div>
+
+                    <div class="stat-card card-cancel" id="card-canceled" draggable="true" onclick="tryReset('canceled', 'Canceled Orders')">
+                        <i class="fas fa-times-circle stat-icon-bg" style="color:var(--danger)"></i>
+                        <div class="stat-label">Canceled Orders</div>
+                        <div class="stat-value" id="dash-canceled">0</div>
+                        <div class="stat-hint"><i class="fas fa-mouse"></i> Reset</div>
+                    </div>
+
+                    <div class="stat-card card-info" id="card-inv" draggable="true">
+                        <i class="fas fa-tags stat-icon-bg" style="color:var(--info)"></i>
+                        <div class="stat-label">Inventory Value</div>
+                        <div class="stat-value" id="dash-inv-value">Rs. 0</div>
+                        <div class="stat-hint">Active Products Sum</div>
+                    </div>
+
+                    <div class="stat-card card-accent" id="card-cust" draggable="true">
+                        <i class="fas fa-users stat-icon-bg" style="color:var(--accent)"></i>
+                        <div class="stat-label">Customers</div>
+                        <div class="stat-value" id="dash-customers">0</div>
+                        <div class="stat-hint">Unique Buyers</div>
+                    </div>
+
+                    <div class="stat-card" id="card-aov" draggable="true">
+                        <i class="fas fa-chart-pie stat-icon-bg"></i>
+                        <div class="stat-label">Avg. Order Value</div>
+                        <div class="stat-value" id="dash-aov">Rs. 0</div>
+                        <div class="stat-hint">Rev / Completed</div>
+                    </div>
+
+                    <div class="stat-card" id="card-rate" draggable="true">
+                        <i class="fas fa-percent stat-icon-bg"></i>
+                        <div class="stat-label">Success Rate</div>
+                        <div class="stat-value" id="dash-rate">0%</div>
+                        <div class="stat-hint">Order Completion %</div>
+                    </div>
+
+                    <div class="stat-card" id="card-pending" draggable="true" style="border: 2px solid var(--warning);">
+                        <i class="fas fa-bell stat-icon-bg" style="color:var(--warning)"></i>
+                        <div class="stat-label">Pending Orders <span class="pulse-dot" id="pending-pulse" style="display:none"></span></div>
+                        <div class="stat-value" id="dash-pending" style="color:#e67e22">0</div>
+                        <div class="stat-hint">Action Required</div>
+                    </div>
+
+                </div>
+            </section>
+
+            <section id="products-section" class="content-section">
+                <h2><i class="fas fa-box-open"></i> Product Management</h2>
+                
+                <div class="sub-nav">
+                    <div class="sub-tab active" onclick="showMiniSection('add-item-mini', this)">Add New Item</div>
+                    <div class="sub-tab" onclick="showMiniSection('inventory-mini', this)">Live Inventory</div>
+                </div>
+
+                <div id="add-item-mini" class="mini-section active-mini">
+                    <div class="glass-card">
+                        <div class="cloudinary-status">
+                            <div class="c-info">
+                                <i class="fas fa-cloud" style="font-size:16px;"></i>
+                                <span id="cloudStatusText">Not connected to Cloudinary</span>
+                                <span class="connected-badge" id="cloudBadge"><i class="fas fa-check-circle"></i> READY</span>
+                            </div>
+                            <button class="btn-cloud-connect" onclick="openCloudSetup()">
+                                <i class="fas fa-plug"></i> <span id="cloudBtnText">Connect Cloudinary</span>
+                            </button>
+                        </div>
+
+                        <h3 style="margin-bottom:20px; color:var(--primary);">Create Premium Listing</h3>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label>Item Name</label>
+                                <input type="text" id="pName" placeholder="e.g. Lavender Dream Bouquet">
+                            </div>
+                            <div class="input-group">
+                                <label>Regular Price (Rs.)</label>
+                                <input type="number" id="pPrice" placeholder="1200">
+                            </div>
+                            <div class="input-group">
+                                <label>Discount Price (Rs.)</label>
+                                <input type="number" id="pDiscount" placeholder="Optional">
+                            </div>
+                            
+                            <div class="input-group" style="grid-column: span 1;">
+                                <label>Main Thumbnail URL</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="img1" placeholder="https://...">
+                                    <button class="btn-upload" onclick="openWidget('img1')" title="Upload Image"><i class="fas fa-cloud-upload-alt"></i></button>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Gallery 1 URL</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="img2" placeholder="https://...">
+                                    <button class="btn-upload" onclick="openWidget('img2')" title="Upload Image"><i class="fas fa-cloud-upload-alt"></i></button>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Gallery 2 URL</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="img3" placeholder="https://...">
+                                    <button class="btn-upload" onclick="openWidget('img3')" title="Upload Image"><i class="fas fa-cloud-upload-alt"></i></button>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Gallery 3 URL</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="img4" placeholder="https://...">
+                                    <button class="btn-upload" onclick="openWidget('img4')" title="Upload Image"><i class="fas fa-cloud-upload-alt"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn-publish" onclick="publishItem()">
+                            <i class="fas fa-cloud-upload-alt"></i> Publish to Website
+                        </button>
+                    </div>
+                </div>
+
+                <div id="inventory-mini" class="mini-section">
+                    <div class="inventory-list" id="itemList"></div>
+                </div>
+            </section>
+            
+            <section id="orders-section" class="content-section">
+                <h2><i class="fas fa-clipboard-list"></i> Order Management</h2>
+
+                <div class="sub-nav">
+                    <div class="sub-tab active" onclick="showMiniSection('active-orders-mini', this)">Active Orders</div>
+                    <div class="sub-tab" onclick="showMiniSection('history-completed-mini', this)">History: Completed</div>
+                    <div class="sub-tab" onclick="showMiniSection('history-canceled-mini', this)">History: Canceled</div>
+                </div>
+
+                <div id="active-orders-mini" class="mini-section active-mini">
+                    <div id="messageList" class="orders-grid"></div>
+                </div>
+
+                <div id="history-completed-mini" class="mini-section">
+                    <div id="completedList" class="orders-grid">
+                        <div style="text-align:center; padding:40px; color:#aaa; grid-column:1/-1;">
+                            <i class="fas fa-history" style="font-size:30px; margin-bottom:10px;"></i><br>
+                            Local History Viewer
+                        </div>
+                    </div>
+                </div>
+
+                 <div id="history-canceled-mini" class="mini-section">
+                    <div id="canceledList" class="orders-grid">
+                        <div style="text-align:center; padding:40px; color:#aaa; grid-column:1/-1;">
+                            <i class="fas fa-ban" style="font-size:30px; margin-bottom:10px;"></i><br>
+                            No recent cancellations.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="chat-section" class="content-section">
+                <h2><i class="fas fa-comments"></i> Client Chat</h2>
+                <div class="chat-placeholder">
+                    <i class="fas fa-comment-dots chat-icon"></i>
+                    <h3>Chat Feature Coming Soon</h3>
+                    <p style="color:#888;">Direct messaging with customers will be available in the next update.</p>
+                </div>
+            </section>
+
+        </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = { 
             apiKey: "AIzaSyD8nbG5Pfjo1cAGf5dG6vgTsyDl5MAFpv0", 
@@ -527,15 +720,223 @@
             projectId: "craft-72780", 
             storageBucket: "craft-72780.firebasestorage.app", 
             messagingSenderId: "911657969290", 
-            appId: "1:911657969290:web:0890417efcc2eeaa34ef73"
+            appId: "1:911657969290:web:0890417efcc2eeaa34ef73",
+            measurementId: "G-B5WRW9556N"
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
         
+        // --- AUTHENTICATION LOGIC ---
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+
+        // Check Login Status on Load
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in.
+                loginScreen.classList.add('hidden');
+                appContainer.classList.add('visible');
+                // Initialize Listeners only if logged in
+                initDataListeners();
+            } else {
+                // User is signed out.
+                loginScreen.classList.remove('hidden');
+                appContainer.classList.remove('visible');
+            }
+        });
+
+        window.handleLogin = (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPass').value;
+            
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+            loginError.classList.remove('show');
+
+            signInWithEmailAndPassword(auth, email, pass)
+            .then((userCredential) => {
+                // Success is handled by onAuthStateChanged
+            })
+            .catch((error) => {
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Access Dashboard';
+                loginError.classList.add('show');
+                const box = document.querySelector('.login-card');
+                
+                // Shake Animation
+                box.style.transform = 'translateX(10px)';
+                setTimeout(() => box.style.transform = 'translateX(-10px)', 100);
+                setTimeout(() => box.style.transform = 'translateX(5px)', 200);
+                setTimeout(() => box.style.transform = 'translateX(0)', 300);
+            });
+        };
+
+        window.handleLogout = () => {
+            signOut(auth).then(() => {
+                location.reload();
+            }).catch((error) => {
+                console.error("Logout Error", error);
+            });
+        };
+
         let currentProducts = [];
         let orderHistory = JSON.parse(localStorage.getItem('orderHistory')) || [];
-        let activeOrdersCache = {}; // Used to store full order details for moving to history
+        let activeOrdersCache = {}; 
+        let unsubscribeProducts = null;
+        let unsubscribeMessages = null;
+
+        function initDataListeners() {
+            // Only run this if we are logged in to save resources/errors
+            if(unsubscribeProducts) return; // Already running
+
+            // --- INVENTORY ---
+            const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
+            unsubscribeProducts = onSnapshot(q, (snapshot) => {
+                const listContainer = document.getElementById('itemList');
+                listContainer.innerHTML = ''; 
+                currentProducts = [];
+                let totalInvValue = 0;
+
+                snapshot.forEach((snap) => { currentProducts.push({ id: snap.id, ...snap.data() }); });
+
+                currentProducts.forEach((item) => {
+                    totalInvValue += (item.discount || item.price);
+                    const previews = (item.images || []).slice(0, 3).map(src => `<img src="${src}">`).join('');
+                    const i1 = item.images[0] || '';
+                    const i2 = item.images[1] || '';
+                    const i3 = item.images[2] || '';
+                    const i4 = item.images[3] || '';
+
+                    const itemHTML = `
+                        <div class="item-card" draggable="true" data-id="${item.id}">
+                            <div class="item-header">
+                                <div class="drag-handle"><i class="fas fa-grip-lines" style="color:#ddd"></i></div>
+                                <div class="img-stack">${previews}</div>
+                                <div class="item-details">
+                                    <div class="item-name">${item.name}</div>
+                                    <div class="item-price">Rs. ${item.price}</div>
+                                </div>
+                                <button class="btn-action btn-edit" onclick="toggleEdit('${item.id}')"><i class="fas fa-pen"></i></button>
+                                <button class="btn-action btn-delete" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button>
+                            </div>
+                            <div class="edit-panel" id="edit-panel-${item.id}">
+                                <div class="form-grid">
+                                    <div class="input-group"><label>NAME</label><input type="text" id="edit-name-${item.id}" value="${item.name}"></div>
+                                    <div class="input-group"><label>PRICE</label><input type="number" id="edit-price-${item.id}" value="${item.price}"></div>
+                                    <div class="input-group"><label>DISCOUNT</label><input type="number" id="edit-discount-${item.id}" value="${item.discount || ''}"></div>
+                                    <div class="input-group"><label>MAIN IMAGE</label><input type="text" id="edit-img1-${item.id}" value="${i1}"></div>
+                                    <div class="input-group"><label>IMG 2</label><input type="text" id="edit-img2-${item.id}" value="${i2}"></div>
+                                    <div class="input-group"><label>IMG 3</label><input type="text" id="edit-img3-${item.id}" value="${i3}"></div>
+                                    <div class="input-group"><label>IMG 4</label><input type="text" id="edit-img4-${item.id}" value="${i4}"></div>
+                                </div>
+                                <div style="margin-top:15px; display:flex; gap:10px;">
+                                    <button class="btn-publish" style="width:auto; margin:0; padding:10px 20px;" onclick="updateItem('${item.id}')">Save Changes</button>
+                                </div>
+                            </div>
+                        </div>`;
+                    listContainer.insertAdjacentHTML('beforeend', itemHTML);
+                });
+                
+                document.getElementById('dash-inv-value').innerText = "Rs. " + totalInvValue.toLocaleString();
+                initInventoryDrag();
+            });
+
+            // --- ORDERS ---
+            const msgQuery = query(collection(db, "messages"), orderBy("timestamp", "desc"));
+            unsubscribeMessages = onSnapshot(msgQuery, (snapshot) => {
+                const msgContainer = document.getElementById('messageList');
+                msgContainer.innerHTML = '';
+                
+                const pendingCount = snapshot.size;
+                document.getElementById('dash-pending').innerText = pendingCount;
+                document.getElementById('pending-pulse').style.display = pendingCount > 0 ? 'inline-block' : 'none';
+                document.getElementById('menu-pulse').style.display = pendingCount > 0 ? 'inline-block' : 'none';
+
+                activeOrdersCache = {}; // Reset Cache
+
+                if(snapshot.empty) {
+                    msgContainer.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align:center; padding:50px; color:#aaa; border:2px dashed #e0e0e0; border-radius:24px;">
+                            <i class="fas fa-glass-cheers" style="font-size:40px; margin-bottom:15px; color:#ddd;"></i><br>All Caught Up!
+                        </div>`;
+                    return;
+                }
+
+                snapshot.forEach((docSnap) => {
+                    const order = docSnap.data();
+                    const oid = docSnap.id;
+                    activeOrdersCache[oid] = order; // Cache full details
+                    renderOrderCard(order, oid, msgContainer, 'active');
+                });
+            });
+        }
+
+        // --- CLOUDINARY LOGIC ---
+        let cloudName = localStorage.getItem('cName');
+        let uploadPreset = localStorage.getItem('cPreset');
+
+        window.checkCloudStatus = () => {
+            if(cloudName && uploadPreset) {
+                document.getElementById('cloudStatusText').innerText = "Connected: " + cloudName;
+                document.getElementById('cloudBadge').style.display = 'flex';
+                document.getElementById('cloudBtnText').innerText = "Settings";
+            }
+        };
+
+        window.openCloudSetup = () => {
+            document.getElementById('cCloudName').value = cloudName || '';
+            document.getElementById('cPreset').value = uploadPreset || '';
+            document.getElementById('cloudModal').classList.add('active');
+        };
+
+        window.closeCloudModal = () => {
+            document.getElementById('cloudModal').classList.remove('active');
+        };
+
+        window.saveCloudConfig = () => {
+            const n = document.getElementById('cCloudName').value.trim();
+            const p = document.getElementById('cPreset').value.trim();
+            if(n && p) {
+                cloudName = n;
+                uploadPreset = p;
+                localStorage.setItem('cName', n);
+                localStorage.setItem('cPreset', p);
+                checkCloudStatus();
+                closeCloudModal();
+                window.showModal('success', 'Connected', 'Cloudinary is now ready to use.', null);
+            } else {
+                alert("Please enter both Cloud Name and Upload Preset.");
+            }
+        };
+
+        window.openWidget = (inputId) => {
+            if(!cloudName || !uploadPreset) {
+                window.showModal('alert', 'Cloudinary Not Configured', 'Please click "Connect Cloudinary" first and enter your details.', null);
+                return;
+            }
+
+            const myWidget = cloudinary.createUploadWidget({
+                cloudName: cloudName, 
+                uploadPreset: uploadPreset,
+                sources: ['local', 'url', 'camera'],
+                showAdvancedOptions: true,
+                cropping: false,
+                multiple: false,
+                defaultSource: "local",
+                styles: {
+                    palette: { window: "#FFFFFF", windowBorder: "#90A0B3", tabIcon: "#6A004B", menuIcons: "#5A616A", textDark: "#000000", textLight: "#FFFFFF", link: "#6A004B", action: "#FF620C", inactiveTabIcon: "#0E2F5A", error: "#F44235", inProgress: "#0078FF", complete: "#20B832", sourceBg: "#E4EBF1" },
+                    fonts: { default: null, "'Poppins', sans-serif": { url: "https://fonts.googleapis.com/css?family=Poppins", active: true } }
+                }
+            }, (error, result) => { 
+                if (!error && result && result.event === "success") { 
+                    document.getElementById(inputId).value = result.info.secure_url;
+                }
+            });
+            myWidget.open();
+        };
 
         // --- NAVIGATION LOGIC ---
         window.showSection = (id, el) => {
@@ -767,6 +1168,7 @@
         }
 
         window.loadDashboard();
+        window.checkCloudStatus();
         setTimeout(initDashboardDrag, 500); 
 
         // --- PUBLISH ---
@@ -792,87 +1194,6 @@
                 document.querySelectorAll('.glass-card input').forEach(i => i.value = '');
             } catch (err) { alert("Error: " + err.message); }
         };
-
-        // --- INVENTORY ---
-        const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
-        onSnapshot(q, (snapshot) => {
-            const listContainer = document.getElementById('itemList');
-            listContainer.innerHTML = ''; 
-            currentProducts = [];
-            let totalInvValue = 0;
-
-            snapshot.forEach((snap) => { currentProducts.push({ id: snap.id, ...snap.data() }); });
-
-            currentProducts.forEach((item) => {
-                totalInvValue += (item.discount || item.price);
-                const previews = (item.images || []).slice(0, 3).map(src => `<img src="${src}">`).join('');
-                const i1 = item.images[0] || '';
-                const i2 = item.images[1] || '';
-                const i3 = item.images[2] || '';
-                const i4 = item.images[3] || '';
-
-                const itemHTML = `
-                    <div class="item-card" draggable="true" data-id="${item.id}">
-                        <div class="item-header">
-                            <div class="drag-handle"><i class="fas fa-grip-lines" style="color:#ddd"></i></div>
-                            <div class="img-stack">${previews}</div>
-                            <div class="item-details">
-                                <div class="item-name">${item.name}</div>
-                                <div class="item-price">Rs. ${item.price}</div>
-                            </div>
-                            <button class="btn-action btn-edit" onclick="toggleEdit('${item.id}')"><i class="fas fa-pen"></i></button>
-                            <button class="btn-action btn-delete" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button>
-                        </div>
-                        <div class="edit-panel" id="edit-panel-${item.id}">
-                            <div class="form-grid">
-                                <div class="input-group"><label>NAME</label><input type="text" id="edit-name-${item.id}" value="${item.name}"></div>
-                                <div class="input-group"><label>PRICE</label><input type="number" id="edit-price-${item.id}" value="${item.price}"></div>
-                                <div class="input-group"><label>DISCOUNT</label><input type="number" id="edit-discount-${item.id}" value="${item.discount || ''}"></div>
-                                <div class="input-group"><label>MAIN IMAGE</label><input type="text" id="edit-img1-${item.id}" value="${i1}"></div>
-                                <div class="input-group"><label>IMG 2</label><input type="text" id="edit-img2-${item.id}" value="${i2}"></div>
-                                <div class="input-group"><label>IMG 3</label><input type="text" id="edit-img3-${item.id}" value="${i3}"></div>
-                                <div class="input-group"><label>IMG 4</label><input type="text" id="edit-img4-${item.id}" value="${i4}"></div>
-                            </div>
-                            <div style="margin-top:15px; display:flex; gap:10px;">
-                                <button class="btn-publish" style="width:auto; margin:0; padding:10px 20px;" onclick="updateItem('${item.id}')">Save Changes</button>
-                            </div>
-                        </div>
-                    </div>`;
-                listContainer.insertAdjacentHTML('beforeend', itemHTML);
-            });
-            
-            document.getElementById('dash-inv-value').innerText = "Rs. " + totalInvValue.toLocaleString();
-            initInventoryDrag();
-        });
-
-        // --- ORDERS ---
-        const msgQuery = query(collection(db, "messages"), orderBy("timestamp", "desc"));
-        onSnapshot(msgQuery, (snapshot) => {
-            const msgContainer = document.getElementById('messageList');
-            msgContainer.innerHTML = '';
-            
-            const pendingCount = snapshot.size;
-            document.getElementById('dash-pending').innerText = pendingCount;
-            document.getElementById('pending-pulse').style.display = pendingCount > 0 ? 'inline-block' : 'none';
-            document.getElementById('menu-pulse').style.display = pendingCount > 0 ? 'inline-block' : 'none';
-
-            activeOrdersCache = {}; // Reset Cache
-
-            if(snapshot.empty) {
-                msgContainer.innerHTML = `
-                    <div style="grid-column: 1/-1; text-align:center; padding:50px; color:#aaa; border:2px dashed #e0e0e0; border-radius:24px;">
-                        <i class="fas fa-glass-cheers" style="font-size:40px; margin-bottom:15px; color:#ddd;"></i><br>All Caught Up!
-                    </div>`;
-                return;
-            }
-
-            snapshot.forEach((docSnap) => {
-                const order = docSnap.data();
-                const oid = docSnap.id;
-                activeOrdersCache[oid] = order; // Cache full details
-                renderOrderCard(order, oid, msgContainer, 'active');
-            });
-        });
 
         function renderOrderCard(order, oid, container, type) {
             const date = new Date(order.timestamp).toLocaleString();
@@ -948,42 +1269,41 @@
         }
 
         window.confirmOrder = (id) => {
-            const order = activeOrdersCache[id]; // Retrieve full object
+            const order = activeOrdersCache[id]; 
             if(!order) return alert("Order not found in cache");
 
             window.showModal('success', 'Confirm Order', 'Mark as complete?', async () => {
                 window.updateDashboard('complete', order.total, order.customerName);
-                addToLocalHistory(id, order, 'completed'); // Pass full object
+                addToLocalHistory(id, order, 'completed'); 
                 await deleteDoc(doc(db, "messages", id));
             });
         };
 
         window.cancelOrder = (id) => {
-            const order = activeOrdersCache[id]; // Retrieve full object
+            const order = activeOrdersCache[id]; 
             if(!order) return alert("Order not found in cache");
 
             window.showModal('danger', 'Cancel Order', 'Cancel this order?', async () => {
                 window.updateDashboard('cancel');
-                addToLocalHistory(id, order, 'canceled'); // Pass full object
+                addToLocalHistory(id, order, 'canceled'); 
                 await deleteDoc(doc(db, "messages", id));
             });
         };
 
-        // SAVE FULL DETAILS
         function addToLocalHistory(id, orderData, status) {
             const historyItem = {
                 id: id,
                 customerName: orderData.customerName,
                 customerAddress: orderData.customerAddress || 'N/A',
                 customerPhone: orderData.customerPhone || 'N/A',
-                items: orderData.items || [], // Save full items array
+                items: orderData.items || [], 
                 total: orderData.total,
                 status: status,
-                timestamp: orderData.timestamp || Date.now() // Keep original time
+                timestamp: orderData.timestamp || Date.now() 
             };
             
             orderHistory.unshift(historyItem);
-            if(orderHistory.length > 50) orderHistory.pop(); // Keep last 50
+            if(orderHistory.length > 50) orderHistory.pop(); 
             localStorage.setItem('orderHistory', JSON.stringify(orderHistory));
             
             if(document.getElementById('history-completed-mini').classList.contains('active-mini')) renderHistory('completed');
@@ -1005,9 +1325,7 @@
             });
         }
         
-        // --- DELETE HISTORY ITEM (UPDATED WITH MODAL) ---
         window.deleteHistoryItem = (id) => {
-            // Updated to use the premium modal instead of browser confirm
             window.showModal('danger', 'Delete Record', 'Permanently delete this record from history?', () => {
                 const index = orderHistory.findIndex(o => o.id === id);
                 if(index > -1) {
@@ -1068,7 +1386,6 @@
             const price = Number(document.getElementById(`edit-price-${id}`).value);
             const discount = document.getElementById(`edit-discount-${id}`).value;
             
-            // Collect separate images
             const i1 = document.getElementById(`edit-img1-${id}`).value;
             const i2 = document.getElementById(`edit-img2-${id}`).value;
             const i3 = document.getElementById(`edit-img3-${id}`).value;
